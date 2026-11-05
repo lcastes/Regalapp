@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Amigo invisible</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Figtree:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#E9EFEA;--card:#fff;--ink:#14281F;--muted:#4D6157;--line:#C9D6CD;--accent:#B8281F;--accent-ink:#fff;--soft:#F3F7F4;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0F1C16;--card:#172A21;--ink:#E8F1EA;--muted:#9DB3A5;--line:#2B4337;--accent:#E5594D;--accent-ink:#1a0805;--soft:#12241B}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0F1C16;--card:#172A21;--ink:#E8F1EA;--muted:#9DB3A5;--line:#2B4337;--accent:#E5594D;--accent-ink:#1a0805;--soft:#12241B}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Figtree,system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:28px 18px 64px}
+h1{font:800 clamp(2.4rem,9vw,3.8rem)/1 "Bricolage Grotesque",Figtree,sans-serif;margin:0 0 8px;letter-spacing:-.02em}
+h2{font:700 1.35rem/1.2 "Bricolage Grotesque",Figtree,sans-serif;margin:0 0 4px}
+.lead{color:var(--muted);margin:0 0 28px;max-width:52ch}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:18px}
+.hint{color:var(--muted);font-size:.92rem;margin:0 0 14px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+input[type=text],select{font:inherit;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0}
+input[type=text]{flex:1 1 180px}
+select{flex:1 1 150px}
+button{font:600 1rem Figtree,sans-serif;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--ink);padding:10px 16px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.big{width:100%;padding:16px;font-size:1.15rem;font-family:"Bricolage Grotesque",Figtree,sans-serif;font-weight:700}
+button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding:0;list-style:none}
+.chips li{display:flex;align-items:center;gap:6px;background:var(--soft);border:1px solid var(--line);border-radius:99px;padding:4px 6px 4px 14px}
+.x{border:0;background:none;padding:2px 8px;font-size:1.2rem;line-height:1;color:var(--muted)}
+.x:hover{color:var(--accent)}
+label.chk{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:.95rem}
+.rules{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:6px}
+.rules li{display:flex;justify-content:space-between;align-items:center;gap:8px;border-left:4px solid var(--accent);background:var(--soft);padding:6px 6px 6px 12px;border-radius:0 8px 8px 0}
+.status{min-height:1.5em;margin:12px 0 0;font-weight:500}
+.status.err{color:var(--accent)}
+.results{display:grid;gap:10px;margin-top:16px}
+.card{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--soft)}
+.card b{font:700 1.15rem "Bricolage Grotesque",Figtree,sans-serif}
+.card .to{font:800 1.3rem "Bricolage Grotesque",Figtree,sans-serif;color:var(--accent)}
+.card.open{border-color:var(--accent)}
+.sealed{color:var(--muted);letter-spacing:.2em}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.empty{color:var(--muted);margin:14px 0 0}
+@media (prefers-reduced-motion:no-preference){.card.open .to{animation:pop .25s ease-out}@keyframes pop{from{transform:scale(.9);opacity:0}}}
+.links{margin-top:22px;border-top:1px solid var(--line);padding-top:18px}
+textarea{width:100%;font:inherit;font-size:.85rem;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:10px 12px;resize:vertical}
+.links .lrow{display:grid;grid-template-columns:minmax(70px,auto) 1fr auto auto;gap:8px;align-items:center;margin-top:8px}
+.links input{font-size:.8rem;padding:8px 10px;width:100%}
+.links a.wa{font-weight:600;color:var(--accent);text-decoration:none;padding:8px 4px}
+.note{background:var(--soft);border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:8px 12px;font-size:.92rem;margin:10px 0}
+#viewer .reveal{text-align:center;padding:36px 20px}
+#viewer .who{font:800 clamp(2.2rem,10vw,3.6rem)/1.1 "Bricolage Grotesque",Figtree,sans-serif;color:var(--accent);margin:18px 0;word-break:break-word}
+@media (max-width:520px){.links .lrow{grid-template-columns:1fr 1fr}.links .lrow b{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<main id="app">
+  <h1>Amigo invisible</h1>
+  <p class="lead">Añade a los participantes, marca quién no puede regalar a quién y haz el sorteo.</p>
+
+  <section>
+    <h2>Participantes</h2>
+    <p class="hint">Escribe un nombre y pulsa Enter. Mínimo 3 personas.</p>
+    <div class="row">
+      <input type="text" id="name" placeholder="Nombre" autocomplete="off" aria-label="Nombre del participante">
+      <button id="addP" class="primary">Añadir</button>
+    </div>
+    <ul class="chips" id="people"></ul>
+  </section>
+
+  <section>
+    <h2>Restricciones</h2>
+    <p class="hint">Para evitar parejas que ya se tocaron o que no se llevan bien.</p>
+    <div class="row">
+      <select id="ra" aria-label="Quien regala"></select>
+      <select id="rb" aria-label="No puede regalar a"></select>
+      <button id="addR">Añadir regla</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="both" checked> También al revés (ninguno regala al otro)</label>
+    <p class="hint" style="margin:8px 0 0">La primera persona <b>no podrá regalar</b> a la segunda.</p>
+    <ul class="rules" id="rules"></ul>
+  </section>
+
+  <section>
+    <h2>Ideas de regalo</h2>
+    <p class="hint">Cada persona verá, debajo de su resultado, un espacio para escribir lo que le gustaría recibir y pulsar Guardar. No necesita cuenta. Quien le toque regalarle verá sus ideas al descubrir su resultado, y se actualizan solas si las cambia. Aquí puedes comprobar quién ya ha escrito.</p>
+    <p class="note" id="fbOff" hidden>Las ideas de regalo no están activas: falta pegar la configuración de Firebase en el código.</p>
+    <div class="bar"><button id="wishRefresh">Ver ideas recibidas</button><button id="wishDel">Borrar ideas del servidor</button></div>
+    <p class="status" id="wishStatus" role="status" aria-live="polite"></p>
+    <ul class="rules" id="wishList"></ul>
+  </section>
+
+  <section>
+    <h2>Sorteo</h2>
+    <label class="chk" style="margin:0 0 14px"><input type="checkbox" id="noswap"> Evitar intercambios directos (que A→B y B→A no ocurran a la vez)</label>
+    <button id="go" class="primary big">Hacer sorteo</button>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+    <div id="out"></div>
+  </section>
+<section>
+    <h2>Copia de seguridad</h2>
+    <p class="hint">Exporta tu lista de participantes y reglas para guardarla o pasarla a otro dispositivo. El resultado del sorteo no se incluye.</p>
+    <textarea id="bk" rows="3" aria-label="Texto de la copia de seguridad" placeholder="Aquí aparecerá tu copia al exportar. Para importar, pega aquí el texto."></textarea>
+    <div class="bar">
+      <button id="bkExp">Exportar lista</button>
+      <button id="bkImp">Importar lista</button>
+    </div>
+    <p class="status" id="bkStatus" role="status" aria-live="polite"></p>
+  </section>
+</main>
+<main id="viewer" hidden></main>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getFirestore,doc,getDoc,setDoc,deleteDoc} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+// Pega aquí la configuración de tu app web de Firebase (ver instrucciones)
+const firebaseConfig={apiKey:"PEGA_AQUI",authDomain:"",projectId:"",appId:""};
+let db=null;
+if(firebaseConfig.apiKey&&firebaseConfig.apiKey!=="PEGA_AQUI"){try{db=getFirestore(initializeApp(firebaseConfig))}catch(e){}}
+const ID=/^[0-9a-f]{32}$/;
+
+const $=id=>document.getElementById(id);
+let people=[],rules=[],tokens={},sid='',wishes={},result=null,shown=new Set();
+
+try{const s=JSON.parse(localStorage.getItem('amigo-invisible')||'null');if(s){people=s.people||[];rules=s.rules||[];tokens=s.tokens||{};sid=s.sid||''}}catch(e){}
+const rid=()=>Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
+function ensureIds(){let c=false;if(!ID.test(sid)){sid=rid();c=true}people.forEach(p=>{if(!ID.test(tokens[p]||'')){tokens[p]=rid();c=true}});if(c)save()}
+function save(){try{localStorage.setItem('amigo-invisible',JSON.stringify({people,rules,tokens,sid}))}catch(e){}}
+
+function status(msg,err){const s=$('status');s.textContent=msg||'';s.className='status'+(err?' err':'')}
+function resetResult(){result=null;shown=new Set();$('out').innerHTML=''}
+
+function addPerson(){
+  const n=$('name').value.trim().replace(/\s+/g,' ');
+  if(!n)return;
+  if(people.some(p=>p.toLowerCase()===n.toLowerCase())){status('Ese nombre ya está en la lista.',true);return}
+  people.push(n);$('name').value='';status('');resetResult();save();render();$('name').focus();
+}
+function removePerson(i){
+  {const n=people[i];delete wishes[n];delete tokens[n]}people.splice(i,1);
+  rules=rules.filter(([a,b])=>a!==i&&b!==i).map(([a,b])=>[a>i?a-1:a,b>i?b-1:b]);
+  resetResult();save();render();
+}
+function addRule(){
+  const a=+$('ra').value,b=+$('rb').value;
+  if(people.length<2||isNaN(a)||isNaN(b))return;
+  if(a===b){status('Elige dos personas distintas.',true);return}
+  const add=(x,y)=>{if(!rules.some(r=>r[0]===x&&r[1]===y))rules.push([x,y])};
+  add(a,b);if($('both').checked)add(b,a);
+  status('');resetResult();save();render();
+}
+function removeRule(a,b,both){
+  rules=rules.filter(([x,y])=>!((x===a&&y===b)||(both&&x===b&&y===a)));
+  resetResult();save();render();
+}
+
+function render(){
+  $('people').innerHTML=people.length?'':'';
+  people.forEach((p,i)=>{
+    const li=document.createElement('li');
+    li.innerHTML='<span></span><button class="x" aria-label="Quitar"></button>';
+    li.firstChild.textContent=p;
+    const b=li.lastChild;b.textContent='×';b.setAttribute('aria-label','Quitar a '+p);b.onclick=()=>removePerson(i);
+    $('people').appendChild(li);
+  });
+  const opts=people.map((p,i)=>{const o=document.createElement('option');o.value=i;o.textContent=p;return o});
+  const keepA=$('ra').value,keepB=$('rb').value;
+  $('ra').innerHTML='';$('rb').innerHTML='';
+  opts.forEach(o=>{$('ra').appendChild(o.cloneNode(true));$('rb').appendChild(o.cloneNode(true))});
+  if(keepA!==''&&people[keepA]!==undefined)$('ra').value=keepA;
+  if(keepB!==''&&people[keepB]!==undefined)$('rb').value=keepB;
+  else if(people.length>1)$('rb').value=1;
+  $('addR').disabled=people.length<2;
+  $('go').disabled=people.length<3;
+
+  const ul=$('rules');ul.innerHTML='';
+  const seen=new Set();let any=false;
+  rules.forEach(([a,b])=>{
+    const k=Math.min(a,b)+'-'+Math.max(a,b);
+    const both=rules.some(([x,y])=>x===b&&y===a);
+    if(both){if(seen.has(k))return;seen.add(k)}
+    any=true;
+    const li=document.createElement('li');
+    const t=document.createElement('span');
+    t.textContent=both?people[a]+' y '+people[b]+' no se regalan entre sí':people[a]+' no regala a '+people[b];
+    const x=document.createElement('button');x.className='x';x.textContent='×';x.setAttribute('aria-label','Quitar regla');
+    x.onclick=()=>removeRule(a,b,both);
+    li.append(t,x);ul.appendChild(li);
+  });
+  if(!any){const p=document.createElement('p');p.className='empty';p.textContent='Sin restricciones por ahora.';ul.appendChild(p)}
+  ensureIds();renderResult();renderWishes();
+}
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function draw(){
+  const n=people.length,noSwap=$('noswap').checked;
+  const blocked=new Set(rules.map(([a,b])=>a+','+b));
+  const allowed=people.map((_,i)=>people.map((_,j)=>j).filter(j=>j!==i&&!blocked.has(i+','+j)));
+  const order=shuffle([...Array(n).keys()]).sort((a,b)=>allowed[a].length-allowed[b].length);
+  const used=new Set(),res=new Array(n);let steps=0;
+  function go(k){
+    if(k===n)return true;
+    if(++steps>300000)return false;
+    const i=order[k];
+    for(const j of shuffle(allowed[i])){
+      if(used.has(j))continue;
+      if(noSwap&&res[j]===i)continue;
+      used.add(j);res[i]=j;
+      if(go(k+1))return true;
+      used.delete(j);res[i]=undefined;
+    }
+    return false;
+  }
+  return go(0)?res:null;
+}
+
+function doDraw(){
+  const r=draw();
+  if(!r){
+    resetResult();
+    status('No hay ninguna combinación posible con estas restricciones. Quita alguna regla o desactiva «evitar intercambios directos».',true);
+    return;
+  }
+  result=r;shown=new Set();status('Sorteo hecho. Pasa el dispositivo a cada persona para que pulse Ver y vea solo su resultado.');
+  renderResult();
+}
+
+function renderResult(){
+  const out=$('out');out.innerHTML='';
+  if(!result)return;
+  const wrap=document.createElement('div');wrap.className='results';
+  people.forEach((p,i)=>{
+    const open=shown.has(i);
+    const c=document.createElement('div');c.className='card'+(open?' open':'');
+    const l=document.createElement('b');l.textContent=p;
+    const m=document.createElement('span');
+    if(open){m.className='to';m.textContent='→ '+people[result[i]]}else{m.className='sealed';m.textContent='• • •'}
+    const btn=document.createElement('button');btn.textContent=open?'Ocultar':'Ver';
+    btn.onclick=()=>{open?shown.delete(i):shown.add(i);renderResult()};
+    const mid=document.createElement('div');mid.style.cssText='display:flex;gap:12px;align-items:center;flex-wrap:wrap';
+    mid.append(l,m);
+    c.append(mid,btn);wrap.appendChild(c);
+  });
+  out.appendChild(wrap);
+  const bar=document.createElement('div');bar.className='bar';
+  const b1=document.createElement('button');b1.textContent='Ocultar todos';b1.onclick=()=>{shown=new Set();renderResult()};
+  const b2=document.createElement('button');b2.textContent='Mostrar todos';b2.onclick=()=>{shown=new Set(people.keys());renderResult()};
+  const b3=document.createElement('button');b3.textContent='Repetir sorteo';b3.onclick=doDraw;
+  bar.append(b1,b2,b3);out.appendChild(bar);
+  out.appendChild(linksPanel());
+}
+
+$('addP').onclick=addPerson;
+$('name').addEventListener('keydown',e=>{if(e.key==='Enter')addPerson()});
+$('addR').onclick=addRule;
+$('go').onclick=doDraw;
+
+const BASE=location.href.split('#')[0];
+const enc=s=>Array.from(new TextEncoder().encode(s),b=>b.toString(16).padStart(2,'0')).join('');
+const dec=h=>{if(!/^([0-9a-f]{2})+$/.test(h))throw new Error('bad');return new TextDecoder().decode(new Uint8Array(h.match(/../g).map(x=>parseInt(x,16))))};
+const linkFor=i=>BASE+'#r-'+enc([people[i],people[result[i]],sid,tokens[people[result[i]]],tokens[people[i]]].join('\n'));
+
+function linksPanel(){
+  const box=document.createElement('div');box.className='links';
+  const h=document.createElement('h2');h.textContent='Enlaces individuales';
+  const p=document.createElement('p');p.className='hint';
+  p.textContent='Envía a cada persona su enlace: solo verá su propio resultado y tú no tendrás que verlo.';
+  const n=document.createElement('p');n.className='note';
+  n.textContent='Si cambias los participantes o repites el sorteo, hay que enviar enlaces nuevos.';
+  box.append(h,p,n);
+  const flash=(b,t)=>{const o=b.textContent;b.textContent=t;setTimeout(()=>b.textContent=o,1500)};
+  const copy=async(text,b,inp)=>{
+    try{await navigator.clipboard.writeText(text);flash(b,'Copiado')}
+    catch(e){if(inp){inp.focus();inp.select()}flash(b,'Copia manualmente')}
+  };
+  people.forEach((name,i)=>{
+    const url=linkFor(i);
+    const row=document.createElement('div');row.className='lrow';
+    const l=document.createElement('b');l.textContent=name;
+    const inp=document.createElement('input');inp.type='text';inp.readOnly=true;inp.value=url;inp.setAttribute('aria-label','Enlace de '+name);
+    inp.onfocus=()=>inp.select();
+    const b=document.createElement('button');b.textContent='Copiar';b.onclick=()=>copy(url,b,inp);
+    const wa=document.createElement('a');wa.className='wa';wa.textContent='WhatsApp';wa.target='_blank';wa.rel='noopener noreferrer';
+    wa.href='https://wa.me/?text='+encodeURIComponent('Hola '+name+', este es tu enlace del amigo invisible: '+url);
+    row.append(l,inp,b,wa);box.appendChild(row);
+  });
+  const all=document.createElement('button');all.style.marginTop='14px';all.textContent='Copiar todos los enlaces';
+  all.onclick=()=>copy(people.map((p,i)=>p+': '+linkFor(i)).join('\n'),all);
+  box.appendChild(all);
+  return box;
+}
+
+function showViewer(tok){
+  const v=$('viewer');v.innerHTML='';
+  const t=document.createElement('h1');t.textContent='Amigo invisible';v.appendChild(t);
+  const s=document.createElement('section');s.className='reveal';
+  let g,r,sd,tk,mk;
+  try{[g,r,sd,tk,mk]=dec(tok).split('\n');if(!g||!r)throw new Error('bad')}
+  catch(e){s.textContent='Este enlace no es válido. Pide a quien organiza el sorteo que te lo envíe de nuevo.';v.appendChild(s);$('app').hidden=true;v.hidden=false;return}
+  const hi=document.createElement('h2');hi.textContent='Hola, '+g;
+  const q=document.createElement('p');q.className='hint';q.textContent='Pulsa el botón cuando nadie más esté mirando.';
+  const out=document.createElement('div');
+  const btn=document.createElement('button');btn.className='primary big';btn.textContent='Descubrir mi amigo invisible';
+  let open=false;
+  btn.onclick=()=>{
+    open=!open;out.innerHTML='';
+    if(open){
+      const l=document.createElement('p');l.className='hint';l.textContent='Tienes que regalar a:';
+      const w=document.createElement('div');w.className='who';w.textContent=r;
+      out.append(l,w);if(ID.test(sd||'')&&ID.test(tk||'')){const k=document.createElement('p');k.className='note';k.style.textAlign='left';k.textContent='Buscando ideas…';out.appendChild(k);getWish(sd,tk).then(x=>{k.textContent=x===null?'No he podido cargar las ideas de '+r+'. Comprueba la conexión.':x?'Ideas de '+r+': '+x:r+' todavía no ha dejado ideas.'})}btn.textContent='Ocultar';btn.className='big';
+    }else{btn.textContent='Descubrir mi amigo invisible';btn.className='primary big'}
+  };
+  s.append(hi,q,btn,out);v.appendChild(s);
+  if(db&&ID.test(sd||'')&&ID.test(mk||''))v.appendChild(wishForm(sd,mk));
+  $('app').hidden=true;v.hidden=false;
+}
+function route(){
+  const h=location.hash;
+  if(h.startsWith('#r-')){showViewer(h.slice(3));return}
+  $('viewer').hidden=true;$('app').hidden=false;
+}
+function bkMsg(m,err){const s=$('bkStatus');s.textContent=m;s.className='status'+(err?' err':'')}
+$('bkExp').onclick=async()=>{
+  const t=$('bk');t.value=JSON.stringify({v:1,people,rules,sid,tokens});
+  try{await navigator.clipboard.writeText(t.value);bkMsg('Lista exportada y copiada. Guárdala donde quieras.')}
+  catch(e){t.focus();t.select();bkMsg('Lista exportada. Selecciona el texto y cópialo.')}
+};
+$('bkImp').onclick=()=>{
+  try{
+    const d=JSON.parse($('bk').value.trim());
+    if(!d||!Array.isArray(d.people)||!Array.isArray(d.rules))throw new Error('bad');
+    const seen=new Set(),np=[];
+    for(const x of d.people){
+      if(typeof x!=='string')throw new Error('bad');
+      const n=x.trim().replace(/\s+/g,' ').slice(0,60);
+      if(n&&!seen.has(n.toLowerCase())){seen.add(n.toLowerCase());np.push(n)}
+    }
+    if(np.length>200)throw new Error('bad');
+    const nr=[];
+    for(const r of d.rules){
+      if(!Array.isArray(r)||r.length!==2)throw new Error('bad');
+      const[a,b]=r;
+      if(Number.isInteger(a)&&Number.isInteger(b)&&a!==b&&a>=0&&b>=0&&a<np.length&&b<np.length&&!nr.some(q=>q[0]===a&&q[1]===b))nr.push([a,b]);
+    }
+    people=np;rules=nr;wishes={};tokens={};sid=ID.test(d.sid)?d.sid:'';if(d.tokens&&typeof d.tokens==='object')for(const n of np){if(ID.test(d.tokens[n]||''))tokens[n]=d.tokens[n]}resetResult();save();render();status('');
+    bkMsg('Importadas '+np.length+' personas y '+nr.length+' reglas.');
+  }catch(e){bkMsg('El texto no es una copia válida. Usa el que te dio Exportar lista.',true)}
+};
+async function copyText(text,btn,inp){const o=btn.textContent;try{await navigator.clipboard.writeText(text);btn.textContent='Copiado'}catch(e){if(inp){inp.focus();inp.select()}btn.textContent='Copia manualmente'}setTimeout(()=>{btn.textContent=o},1500)}
+function wishMsg(m,err){const s=$('wishStatus');s.textContent=m;s.className='status'+(err?' err':'')}
+async function getWish(sd,tk){
+  if(!db||!ID.test(sd||'')||!ID.test(tk||''))return null;
+  try{const x=await getDoc(doc(db,'sorteos',sd,'deseos',tk));return x.exists()?String(x.data().w||''):''}catch(e){return null}
+}
+function renderWishes(){
+  $('fbOff').hidden=!!db;
+  const ul=$('wishList');ul.innerHTML='';
+  people.forEach(name=>{const li=document.createElement('li');const sp=document.createElement('span');sp.textContent=name+': '+(wishes[name]||'sin ideas todavía');li.appendChild(sp);ul.appendChild(li)});
+}
+$('wishRefresh').onclick=async()=>{
+  if(!db){wishMsg('Firebase no está configurado.',true);return}
+  wishMsg('Cargando…');let n=0;
+  for(const p of people){const w=await getWish(sid,tokens[p]);if(w===null){wishMsg('No he podido conectar con el servidor.',true);return}if(w){wishes[p]=w;n++}else delete wishes[p]}
+  renderWishes();wishMsg(n+' de '+people.length+' personas han dejado ideas.');
+};
+$('wishDel').onclick=async()=>{
+  if(!db)return;
+  if(!confirm('¿Borrar del servidor todas las ideas de regalo? Los enlaces seguirán abriéndose, pero las ideas desaparecerán.'))return;
+  try{for(const p of people)await deleteDoc(doc(db,'sorteos',sid,'deseos',tokens[p]));wishes={};renderWishes();wishMsg('Ideas borradas del servidor.')}
+  catch(e){wishMsg('No se han podido borrar.',true)}
+};
+function wishForm(sd,tk){
+  const s=document.createElement('section');
+  const hi=document.createElement('h2');hi.textContent='Tus ideas de regalo';
+  const q=document.createElement('p');q.className='hint';
+  q.textContent='Escribe lo que te gustaría recibir o ideas para quien te toque, y pulsa Guardar. Lo verán quien organiza el sorteo y la persona que te regale. Puedes cambiarlo cuando quieras volviendo a abrir este mismo enlace.';
+  const ta=document.createElement('textarea');ta.rows=4;ta.maxLength=300;ta.setAttribute('aria-label','Lo que me gustaría recibir');
+  ta.placeholder='Por ejemplo: libros de misterio, una bufanda azul, café de especialidad…';
+  const btn=document.createElement('button');btn.className='primary big';btn.style.marginTop='12px';btn.textContent='Guardar mis ideas';
+  const st=document.createElement('p');st.className='status';st.setAttribute('role','status');
+  getWish(sd,tk).then(x=>{if(x&&!ta.value)ta.value=x});
+  btn.onclick=async()=>{
+    const w=ta.value.trim().replace(/\s+/g,' ').slice(0,300);btn.disabled=true;st.className='status';st.textContent='Guardando…';
+    try{await setDoc(doc(db,'sorteos',sd,'deseos',tk),{w});st.textContent='Guardado.'}
+    catch(e){st.className='status err';st.textContent='No se ha podido guardar. Comprueba la conexión e inténtalo de nuevo.'}
+    btn.disabled=false;
+  };
+  s.append(hi,q,ta,btn,st);return s;
+}
+window.addEventListener('hashchange',route);
+render();route();
+</script>
+</body>
+</html>
