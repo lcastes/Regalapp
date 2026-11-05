@@ -62,6 +62,17 @@ textarea{width:100%;font:inherit;font-size:.85rem;color:var(--ink);background:va
 .tree li::before{content:"🎄";position:absolute;left:0}
 .cookie{text-align:center;margin:16px 0 6px}
 @media (prefers-reduced-motion:no-preference){.cookie svg{transform-origin:50% 100%;animation:wob 3.2s ease-in-out infinite}@keyframes wob{50%{transform:rotate(3deg)}}}
+.giftbox{text-align:center;margin:14px 0 6px}
+.giftbox svg{width:170px;height:auto;display:block;margin:0 auto;overflow:visible}
+.giftbox .cat{transform:translateY(74px);transition:transform .8s cubic-bezier(.2,1.5,.4,1) .3s}
+.giftbox.open .cat{transform:translateY(0)}
+.giftbox .lid{transform-box:fill-box;transform-origin:center;transition:transform .6s cubic-bezier(.3,1.3,.5,1)}
+.giftbox.open .lid{transform:translate(80px,16px) rotate(62deg)}
+.giftbox .thanks{font:400 2.6rem/1.1 "Christmas Bell","Bricolage Grotesque",cursive;color:var(--title);min-height:1.2em;opacity:0}
+.giftbox.open .thanks.pop{animation:thx .6s .7s both cubic-bezier(.2,1.6,.4,1)}
+@keyframes thx{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@media (prefers-reduced-motion:no-preference){.giftbox:not(.open) .box{transform-box:fill-box;transform-origin:50% 100%;animation:jig 1.8s ease-in-out infinite}@keyframes jig{0%,55%,100%{transform:rotate(0)}10%{transform:rotate(-4deg)}20%{transform:rotate(4deg)}30%{transform:rotate(-3deg)}40%{transform:rotate(3deg)}}}
+@media (prefers-reduced-motion:reduce){.giftbox *{transition:none!important;animation:none!important}.giftbox.open .thanks{opacity:1}}
 </style>
 </head>
 <body>
@@ -386,6 +397,7 @@ $('wishDel').onclick=async()=>{
   try{for(const p of people)await deleteDoc(doc(db,'sorteos',sid,'deseos',tokens[p]));wishes={};renderWishes();wishMsg('Ideas borradas del servidor.')}
   catch(e){wishMsg('No se han podido borrar.',true)}
 };
+function openGift(g){g.classList.add('open');const t=g.querySelector('.thanks');t.classList.remove('pop');void t.offsetWidth;t.classList.add('pop')}
 function wishForm(sd,tk){
   const s=document.createElement('section');
   const hi=document.createElement('h2');hi.textContent='Tus ideas de regalo';
@@ -398,11 +410,12 @@ function wishForm(sd,tk){
   getWish(sd,tk).then(x=>{if(x&&!ta.value)ta.value=x});
   btn.onclick=async()=>{
     const w=ta.value.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean).join('\n').slice(0,300);ta.value=w;btn.disabled=true;st.className='status';st.textContent='Guardando…';
-    try{await setDoc(doc(db,'sorteos',sd,'deseos',tk),{w});st.textContent='Guardado.'}
+    try{await setDoc(doc(db,'sorteos',sd,'deseos',tk),{w});st.textContent='Guardado.';openGift(gift)}
     catch(e){st.className='status err';st.textContent='No se ha podido guardar. Comprueba la conexión e inténtalo de nuevo.'}
     btn.disabled=false;
   };
-  s.append(hi,q,ta,btn,st);return s;
+  const gift=document.createElement('div');gift.className='giftbox';gift.innerHTML='<svg viewBox="0 0 160 170" role="img" aria-label="Un regalo con un gato con gorro de Navidad"><defs><clipPath id="ccl"><rect x="0" y="0" width="160" height="158"/></clipPath></defs><g clip-path="url(#ccl)"><g class="cat"><ellipse cx="80" cy="112" rx="27" ry="20" fill="#F4A95F"/><path d="M46 68L47 40L67 54ZM114 68L113 40L93 54Z" fill="#F4A95F"/><path d="M51 62L52 47L62 55ZM109 62L108 47L98 55Z" fill="#F7B7B7"/><ellipse cx="80" cy="77" rx="31" ry="27" fill="#F4A95F"/><path d="M72 64v7M80 62v8M88 64v7" stroke="#D9853B" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="68" cy="76" rx="4.5" ry="5.5" fill="#3A2412"/><ellipse cx="92" cy="76" rx="4.5" ry="5.5" fill="#3A2412"/><circle cx="69.6" cy="73.6" r="1.7" fill="#fff"/><circle cx="93.6" cy="73.6" r="1.7" fill="#fff"/><circle cx="58" cy="85" r="5" fill="#F28B9B" opacity=".6"/><circle cx="102" cy="85" r="5" fill="#F28B9B" opacity=".6"/><path d="M77 83h6l-3 3.5Z" fill="#E86A7E"/><path d="M80 86.5Q77 92 72.5 89M80 86.5Q83 92 87.5 89" fill="none" stroke="#3A2412" stroke-width="1.8" stroke-linecap="round"/><path d="M56 86L42 83M56 90L42 93M104 86L118 83M104 90L118 93" stroke="#8A5A33" stroke-width="1.4" stroke-linecap="round"/><path d="M55 55Q60 22 90 22Q108 24 109 55Z" fill="#C8352B"/><path d="M90 22Q114 20 121 44" fill="none" stroke="#C8352B" stroke-width="11" stroke-linecap="round"/><circle cx="121" cy="46" r="6.5" fill="#fff"/><rect x="50" y="50" width="60" height="12" rx="6" fill="#fff"/><ellipse cx="64" cy="106" rx="9" ry="6" fill="#F4A95F"/><ellipse cx="96" cy="106" rx="9" ry="6" fill="#F4A95F"/></g></g><g class="box"><rect x="30" y="105" width="100" height="55" rx="4" fill="#C8352B"/><rect x="72" y="105" width="16" height="55" fill="#E0A526"/><g class="lid"><rect x="24" y="92" width="112" height="17" rx="4" fill="#A32018"/><rect x="72" y="92" width="16" height="17" fill="#E0A526"/><ellipse cx="66" cy="84" rx="14" ry="9" transform="rotate(-18 66 84)" fill="#E0A526"/><ellipse cx="94" cy="84" rx="14" ry="9" transform="rotate(18 94 84)" fill="#E0A526"/><circle cx="80" cy="88" r="6" fill="#C98F12"/></g></g></svg><div class="thanks" aria-live="polite">¡Gracias!</div>';
+  s.append(hi,q,ta,gift,btn,st);return s;
 }
 window.addEventListener('hashchange',route);
 render();route();
