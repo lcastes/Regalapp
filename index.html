@@ -87,11 +87,11 @@ textarea{width:100%;font:inherit;font-size:.85rem;color:var(--ink);background:va
 @media (prefers-reduced-motion:no-preference){.cookie:not(.open) .pupils{animation:glance 4.5s ease-in-out infinite}@keyframes glance{0%,28%{transform:translateX(-2.6px)}34%,62%{transform:translateX(2.6px)}68%,100%{transform:translateX(-2.6px)}}
 .cookie.open .belly{transform-box:fill-box;transform-origin:50% 50%;animation:belly .6s .7s}@keyframes belly{40%{transform:scale(1.08)}}}
 @media (prefers-reduced-motion:reduce){.cookie *{transition:none!important}}
-.giftbox .tin{opacity:0;transform:scale(.1);transform-origin:80px 104px;transition:transform .9s cubic-bezier(.2,1.4,.4,1) var(--d),opacity .25s var(--d)}
-.giftbox .tin .core{stroke-width:2.2;stroke-linecap:round}
-.giftbox .tin .fur{stroke-width:8;stroke-linecap:butt;stroke-dasharray:1.3 1.9}
-.giftbox.open .tin{opacity:1;transform:scale(1)}
-@media (prefers-reduced-motion:no-preference){.giftbox.open .tin{animation:wave var(--t) ease-in-out calc(var(--d) + .9s) infinite alternate}@keyframes wave{from{rotate:0deg}to{rotate:var(--w)}}}
+.giftbox .conf{transform-box:fill-box;transform-origin:50% 50%;animation:conf var(--t) both}
+@keyframes conf{
+0%{transform:translate(0,0) rotate(0deg);animation-timing-function:cubic-bezier(.15,.75,.35,1)}
+38%{transform:translate(calc(var(--x)*.55),var(--up)) rotate(calc(var(--r)*.45));animation-timing-function:cubic-bezier(.55,0,.95,.6)}
+100%{transform:translate(var(--x),var(--g)) rotate(var(--r))}}
 </style>
 </head>
 <body>
@@ -304,20 +304,28 @@ $('go').onclick=doDraw;
 const BASE=location.href.split('#')[0];
 const enc=s=>Array.from(new TextEncoder().encode(s),b=>b.toString(16).padStart(2,'0')).join('');
 const dec=h=>{if(!/^([0-9a-f]{2})+$/.test(h))throw new Error('bad');return new TextDecoder().decode(new Uint8Array(h.match(/../g).map(x=>parseInt(x,16))))};
-const linkFor=i=>BASE+'#r-'+enc([people[i],people[result[i]],sid,tokens[people[result[i]]],tokens[people[i]]].join('\n'));
+const b64=u=>btoa(String.fromCharCode(...u)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const unb64=t=>Uint8Array.from(atob(t.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+const h2b=h=>Uint8Array.from(h.match(/../g).map(x=>parseInt(x,16)));
+const b2h=u=>Array.from(u,b=>b.toString(16).padStart(2,'0')).join('');
+function packLink(g,r,sd,tk,mk){const n=new TextEncoder().encode(g+'\0'+r),u=new Uint8Array(48+n.length);u.set(h2b(sd),0);u.set(h2b(tk),16);u.set(h2b(mk),32);u.set(n,48);return b64(u)}
+function unpackLink(t){const u=unb64(t);if(u.length<50)throw new Error('bad');const n=new TextDecoder().decode(u.slice(48)).split('\0');return [n[0],n[1],b2h(u.slice(0,16)),b2h(u.slice(16,32)),b2h(u.slice(32,48))]}
+const linkFor=i=>BASE+'#k-'+packLink(people[i],people[result[i]],sid,tokens[people[result[i]]],tokens[people[i]]);
 
 function linksPanel(){
   const box=document.createElement('div');box.className='links';
   const h=document.createElement('h2');h.textContent='Enlaces individuales';
   const p=document.createElement('p');p.className='hint';
-  p.textContent='Envía a cada persona su enlace: solo verá su propio resultado y tú no tendrás que verlo.';
+  p.textContent='Pulsa Copiar y pega el mensaje, que ya lleva su enlace, en WhatsApp u otra app. Cada persona solo verá su propio resultado y tú no tendrás que verlo.';
   const n=document.createElement('p');n.className='note';
   n.textContent='Si cambias los participantes o repites el sorteo, hay que enviar enlaces nuevos.';
   box.append(h,p,n);
   const flash=(b,t)=>{const o=b.textContent;b.textContent=t;setTimeout(()=>b.textContent=o,1500)};
-  const copy=async(text,b,inp)=>{
-    try{await navigator.clipboard.writeText(text);flash(b,'Copiado')}
-    catch(e){if(inp){inp.focus();inp.select()}flash(b,'Copia manualmente')}
+  const msg=u=>'Hola! Aquí tienes el resultado del sorteo del amigo invisible. Para ver quién te ha tocado y hacer tu lista de deseos o actualizarla haz click aquí. Gracias!\n\n'+u;
+  const copy=async(text,b)=>{
+    try{await navigator.clipboard.writeText(text);flash(b,'Copiado');return}catch(e){}
+    try{const t=document.createElement('textarea');t.value=text;t.style.cssText='position:fixed;opacity:0';document.body.appendChild(t);t.select();const ok=document.execCommand('copy');t.remove();flash(b,ok?'Copiado':'No se pudo copiar')}
+    catch(e){flash(b,'No se pudo copiar')}
   };
   people.forEach((name,i)=>{
     const url=linkFor(i);
@@ -325,23 +333,23 @@ function linksPanel(){
     const l=document.createElement('b');l.textContent=name;
     const inp=document.createElement('input');inp.type='text';inp.readOnly=true;inp.value=url;inp.setAttribute('aria-label','Enlace de '+name);
     inp.onfocus=()=>inp.select();
-    const b=document.createElement('button');b.textContent='Copiar';b.onclick=()=>copy(url,b,inp);
+    const b=document.createElement('button');b.textContent='Copiar';b.onclick=()=>copy(msg(url),b);
     const wa=document.createElement('a');wa.className='wa';wa.textContent='WhatsApp';wa.target='_blank';wa.rel='noopener noreferrer';
-    wa.href='https://wa.me/?text='+encodeURIComponent('Hola '+name+', este es tu enlace del amigo invisible: '+url);
+    wa.href='https://wa.me/?text='+encodeURIComponent(msg(url));
     row.append(l,inp,b,wa);box.appendChild(row);
   });
-  const all=document.createElement('button');all.style.marginTop='14px';all.textContent='Copiar todos los enlaces';
-  all.onclick=()=>copy(people.map((p,i)=>p+': '+linkFor(i)).join('\n'),all);
+  const all=document.createElement('button');all.style.marginTop='14px';all.textContent='Copiar todos los mensajes';
+  all.onclick=()=>copy(people.map((p,i)=>p+':\n'+msg(linkFor(i))).join('\n\n--------\n\n'),all);
   box.appendChild(all);
   return box;
 }
 
-function showViewer(tok){
+function showViewer(tok,packed){
   const v=$('viewer');v.innerHTML='';
   const t=document.createElement('h1');t.textContent='Amigo invisible';v.appendChild(t);
   const s=document.createElement('section');s.className='reveal';
   let g,r,sd,tk,mk;
-  try{[g,r,sd,tk,mk]=dec(tok).split('\n');if(!g||!r)throw new Error('bad')}
+  try{[g,r,sd,tk,mk]=packed?unpackLink(tok):dec(tok).split('\n');if(!g||!r)throw new Error('bad')}
   catch(e){s.textContent='Este enlace no es válido. Pide a quien organiza el sorteo que te lo envíe de nuevo.';v.appendChild(s);$('app').hidden=true;v.hidden=false;return}
   const hi=document.createElement('h2');hi.textContent='Hola, '+g;
   const q=document.createElement('p');q.className='hint';q.textContent='Pulsa el botón cuando nadie más esté mirando.';
@@ -363,6 +371,7 @@ function showViewer(tok){
 }
 function route(){
   const h=location.hash;
+  if(h.startsWith('#k-')){showViewer(h.slice(3),true);return}
   if(h.startsWith('#r-')){showViewer(h.slice(3));return}
   $('viewer').hidden=true;$('app').hidden=false;
 }
@@ -416,7 +425,23 @@ $('wishDel').onclick=async()=>{
   try{for(const p of people)await deleteDoc(doc(db,'sorteos',sid,'deseos',tokens[p]));wishes={};renderWishes();wishMsg('Ideas borradas del servidor.')}
   catch(e){wishMsg('No se han podido borrar.',true)}
 };
-function openGift(g){g.classList.add('open');const t=g.querySelector('.thanks');t.classList.remove('pop');void t.offsetWidth;t.classList.add('pop')}
+function burst(g){
+  const c=g.querySelector('.confetti');c.innerHTML='';
+  const cols=['#C8352B','#E0A526','#3E7D52','#2F80C8','#F28B9B','#8E5BC0'];
+  const calm=matchMedia('(prefers-reduced-motion:reduce)').matches,N='http://www.w3.org/2000/svg',R=Math.random;
+  for(let i=0;i<40;i++){
+    const rx=6+R()*148,ry=161+R()*8,round=R()<.4;
+    const e=document.createElementNS(N,round?'circle':'rect');
+    if(round){e.setAttribute('r',(1.7+R()*1.1).toFixed(1));e.setAttribute('cx',80);e.setAttribute('cy',104)}
+    else{const w=3.5+R()*3,h=2+R()*1.6;e.setAttribute('width',w.toFixed(1));e.setAttribute('height',h.toFixed(1));e.setAttribute('x',(80-w/2).toFixed(1));e.setAttribute('y',(104-h/2).toFixed(1));e.setAttribute('rx','.6')}
+    e.setAttribute('fill',cols[i%cols.length]);e.setAttribute('class','conf');
+    const st=e.style;st.setProperty('--x',(rx-80).toFixed(1)+'px');st.setProperty('--g',(ry-104).toFixed(1)+'px');
+    st.setProperty('--up',-(45+R()*65).toFixed(0)+'px');st.setProperty('--r',((R()<.5?-1:1)*(200+R()*520)).toFixed(0)+'deg');st.setProperty('--t',(1.2+R()*.7).toFixed(2)+'s');
+    if(calm){st.animation='none';st.transform='translate(var(--x),var(--g)) rotate(var(--r))';c.appendChild(e)}
+    else setTimeout(()=>c.appendChild(e),150+R()*300);
+  }
+}
+function openGift(g){g.classList.add('open');burst(g);const t=g.querySelector('.thanks');t.classList.remove('pop');void t.offsetWidth;t.classList.add('pop')}
 function wishForm(sd,tk){
   const s=document.createElement('section');
   const hi=document.createElement('h2');hi.textContent='Tus ideas de regalo';
@@ -433,7 +458,7 @@ function wishForm(sd,tk){
     catch(e){st.className='status err';st.textContent='No se ha podido guardar. Comprueba la conexión e inténtalo de nuevo.'}
     btn.disabled=false;
   };
-  const gift=document.createElement('div');gift.className='giftbox';gift.innerHTML='<svg viewBox="0 0 160 170" role="img" aria-label="Un regalo con un gato con gorro de Navidad"><defs><clipPath id="ccl"><rect x="0" y="0" width="160" height="158"/></clipPath></defs><g class="tinsel"><g class="tin" style="--d:0.35s;--t:2.0s;--w:6deg" stroke="#E0A526" fill="none"><path class="core" d="M78 104C50 96 30 80 34 52S52 18 30 4"/><path class="fur" d="M78 104C50 96 30 80 34 52S52 18 30 4"/></g><g class="tin" style="--d:0.45s;--t:2.3s;--w:-5deg" stroke="#C8352B" fill="none"><path class="core" d="M76 104C58 100 14 96 12 68S28 40 16 20"/><path class="fur" d="M76 104C58 100 14 96 12 68S28 40 16 20"/></g><g class="tin" style="--d:0.55s;--t:1.8s;--w:7deg" stroke="#3E7D52" fill="none"><path class="core" d="M80 104C70 80 46 72 54 46S76 28 62 6"/><path class="fur" d="M80 104C70 80 46 72 54 46S76 28 62 6"/></g><g class="tin" style="--d:0.6s;--t:2.1s;--w:-6deg" stroke="#CFD8DC" fill="none"><path class="core" d="M80 104C70 70 100 60 84 30S92 8 80 -4"/><path class="fur" d="M80 104C70 70 100 60 84 30S92 8 80 -4"/></g><g class="tin" style="--d:0.4s;--t:2.1s;--w:-6deg" stroke="#C8352B" fill="none"><path class="core" d="M82 104C110 96 130 80 126 52S108 18 130 4"/><path class="fur" d="M82 104C110 96 130 80 126 52S108 18 130 4"/></g><g class="tin" style="--d:0.5s;--t:1.9s;--w:5deg" stroke="#E0A526" fill="none"><path class="core" d="M84 104C102 100 146 96 148 68S132 40 144 20"/><path class="fur" d="M84 104C102 100 146 96 148 68S132 40 144 20"/></g><g class="tin" style="--d:0.65s;--t:2.2s;--w:-7deg" stroke="#CFD8DC" fill="none"><path class="core" d="M80 104C90 80 114 72 106 46S84 28 98 6"/><path class="fur" d="M80 104C90 80 114 72 106 46S84 28 98 6"/></g></g><g clip-path="url(#ccl)"><g class="cat"><ellipse cx="80" cy="114" rx="27" ry="20" fill="#F4A95F"/><path d="M45 70L44 38Q56 35 69 52Z" fill="#F4A95F"/><path d="M115 70L116 38Q104 35 91 52Z" fill="#F4A95F"/><path d="M50 62L50 46Q57 45 63 54Z" fill="#F7A8B8"/><path d="M110 62L110 46Q103 45 97 54Z" fill="#F7A8B8"/><ellipse cx="80" cy="78" rx="34" ry="28" fill="#F4A95F"/><path d="M46 78l7 1M46 84l7 0M114 78l-7 1M114 84l-7 0" fill="none" stroke-linecap="round" stroke="#D9853B" stroke-width="2.6"/><ellipse cx="72" cy="91" rx="9" ry="7" fill="#FFF1DC"/><ellipse cx="88" cy="91" rx="9" ry="7" fill="#FFF1DC"/><ellipse cx="66" cy="78" rx="6.5" ry="8" fill="#2A170A"/><ellipse cx="94" cy="78" rx="6.5" ry="8" fill="#2A170A"/><circle cx="68.2" cy="74.4" r="2.7" fill="#fff"/><circle cx="64" cy="82" r="1.3" fill="#fff"/><circle cx="96.2" cy="74.4" r="2.7" fill="#fff"/><circle cx="92" cy="82" r="1.3" fill="#fff"/><ellipse cx="54" cy="89" rx="6.5" ry="4.2" fill="#F28B9B" opacity=".6"/><ellipse cx="106" cy="89" rx="6.5" ry="4.2" fill="#F28B9B" opacity=".6"/><path d="M77.5 85.5h5l-2.5 3.2Z" fill="#F27C93"/><path d="M80 88.7Q80 92.5 76 92.5Q73.5 92.5 73 90.5M80 88.7Q80 92.5 84 92.5Q86.5 92.5 87 90.5" fill="none" stroke-linecap="round" stroke="#3A2412" stroke-width="1.8"/><path d="M52 90L38 87M52 94L39 97M108 90L122 87M108 94L121 97" fill="none" stroke-linecap="round" stroke="#8A5A33" stroke-width="1.3"/><path d="M52 51Q54 21 84 21Q103 23 108 51Z" fill="#C8352B"/><path d="M84 21Q112 19 119 43" fill="none" stroke-linecap="round" stroke="#C8352B" stroke-width="11"/><circle cx="119" cy="46" r="7" fill="#fff"/><rect x="46" y="47" width="68" height="13" rx="6.5" fill="#fff"/><ellipse cx="62" cy="104" rx="10" ry="7" fill="#F4A95F"/><ellipse cx="98" cy="104" rx="10" ry="7" fill="#F4A95F"/><path d="M59 99v4M63 98v5M97 98v5M101 99v4" fill="none" stroke-linecap="round" stroke="#D9853B" stroke-width="1.6"/></g></g><g class="box"><rect x="30" y="105" width="100" height="55" rx="4" fill="#C8352B"/><rect x="72" y="105" width="16" height="55" fill="#E0A526"/><g class="lid"><rect x="24" y="92" width="112" height="17" rx="4" fill="#A32018"/><rect x="72" y="92" width="16" height="17" fill="#E0A526"/><ellipse cx="66" cy="84" rx="14" ry="9" transform="rotate(-18 66 84)" fill="#E0A526"/><ellipse cx="94" cy="84" rx="14" ry="9" transform="rotate(18 94 84)" fill="#E0A526"/><circle cx="80" cy="88" r="6" fill="#C98F12"/></g></g></svg><div class="thanks" aria-live="polite">¡Gracias!</div>';
+  const gift=document.createElement('div');gift.className='giftbox';gift.innerHTML='<svg viewBox="0 0 160 170" role="img" aria-label="Un regalo con un gato con gorro de Navidad"><defs><clipPath id="ccl"><rect x="0" y="0" width="160" height="158"/></clipPath></defs><g clip-path="url(#ccl)"><g class="cat"><ellipse cx="80" cy="114" rx="27" ry="20" fill="#F4A95F"/><path d="M45 70L44 38Q56 35 69 52Z" fill="#F4A95F"/><path d="M115 70L116 38Q104 35 91 52Z" fill="#F4A95F"/><path d="M50 62L50 46Q57 45 63 54Z" fill="#F7A8B8"/><path d="M110 62L110 46Q103 45 97 54Z" fill="#F7A8B8"/><ellipse cx="80" cy="78" rx="34" ry="28" fill="#F4A95F"/><path d="M46 78l7 1M46 84l7 0M114 78l-7 1M114 84l-7 0" fill="none" stroke-linecap="round" stroke="#D9853B" stroke-width="2.6"/><ellipse cx="72" cy="91" rx="9" ry="7" fill="#FFF1DC"/><ellipse cx="88" cy="91" rx="9" ry="7" fill="#FFF1DC"/><ellipse cx="66" cy="78" rx="6.5" ry="8" fill="#2A170A"/><ellipse cx="94" cy="78" rx="6.5" ry="8" fill="#2A170A"/><circle cx="68.2" cy="74.4" r="2.7" fill="#fff"/><circle cx="64" cy="82" r="1.3" fill="#fff"/><circle cx="96.2" cy="74.4" r="2.7" fill="#fff"/><circle cx="92" cy="82" r="1.3" fill="#fff"/><ellipse cx="54" cy="89" rx="6.5" ry="4.2" fill="#F28B9B" opacity=".6"/><ellipse cx="106" cy="89" rx="6.5" ry="4.2" fill="#F28B9B" opacity=".6"/><path d="M77.5 85.5h5l-2.5 3.2Z" fill="#F27C93"/><path d="M80 88.7Q80 92.5 76 92.5Q73.5 92.5 73 90.5M80 88.7Q80 92.5 84 92.5Q86.5 92.5 87 90.5" fill="none" stroke-linecap="round" stroke="#3A2412" stroke-width="1.8"/><path d="M52 90L38 87M52 94L39 97M108 90L122 87M108 94L121 97" fill="none" stroke-linecap="round" stroke="#8A5A33" stroke-width="1.3"/><path d="M52 51Q54 21 84 21Q103 23 108 51Z" fill="#C8352B"/><path d="M84 21Q112 19 119 43" fill="none" stroke-linecap="round" stroke="#C8352B" stroke-width="11"/><circle cx="119" cy="46" r="7" fill="#fff"/><rect x="46" y="47" width="68" height="13" rx="6.5" fill="#fff"/><ellipse cx="62" cy="104" rx="10" ry="7" fill="#F4A95F"/><ellipse cx="98" cy="104" rx="10" ry="7" fill="#F4A95F"/><path d="M59 99v4M63 98v5M97 98v5M101 99v4" fill="none" stroke-linecap="round" stroke="#D9853B" stroke-width="1.6"/></g></g><g class="box"><rect x="30" y="105" width="100" height="55" rx="4" fill="#C8352B"/><rect x="72" y="105" width="16" height="55" fill="#E0A526"/><g class="lid"><rect x="24" y="92" width="112" height="17" rx="4" fill="#A32018"/><rect x="72" y="92" width="16" height="17" fill="#E0A526"/><ellipse cx="66" cy="84" rx="14" ry="9" transform="rotate(-18 66 84)" fill="#E0A526"/><ellipse cx="94" cy="84" rx="14" ry="9" transform="rotate(18 94 84)" fill="#E0A526"/><circle cx="80" cy="88" r="6" fill="#C98F12"/></g></g><g class="confetti"></g></svg><div class="thanks" aria-live="polite">¡Gracias!</div>';
   s.append(hi,q,ta,gift,btn,st);return s;
 }
 window.addEventListener('hashchange',route);
