@@ -92,6 +92,7 @@ textarea{width:100%;font:inherit;font-size:.85rem;color:var(--ink);background:va
 0%{transform:translate(0,0) rotate(0deg);animation-timing-function:cubic-bezier(.15,.75,.35,1)}
 38%{transform:translate(calc(var(--x)*.55),var(--up)) rotate(calc(var(--r)*.45));animation-timing-function:cubic-bezier(.55,0,.95,.6)}
 100%{transform:translate(var(--x),var(--g)) rotate(var(--r))}}
+.tree a,#wishList a{color:var(--accent);word-break:break-all;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -161,7 +162,19 @@ let db=null;
 if(firebaseConfig.apiKey&&firebaseConfig.apiKey!=="PEGA_AQUI"){try{db=getFirestore(initializeApp(firebaseConfig))}catch(e){}}
 const ID=/^[0-9a-f]{32}$/;
 function validResult(r,n){return Array.isArray(r)&&n>=3&&r.length===n&&r.every((x,i)=>Number.isInteger(x)&&x>=0&&x<n&&x!==i)&&new Set(r).size===n?r:null}
-const wishItems=t=>String(t||'').split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean);
+const URLRE=/(?:https?:\/\/|www\.)[^\s]+/gi;
+const wishItems=t=>{const u=[];return String(t||'').replace(URLRE,m=>{const k=m.match(/^(.*?)([.,;:!?)\]]*)$/);u.push(k[1]);return '\u0001'+(u.length-1)+'\u0002'+k[2]}).split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean).map(x=>x.replace(/\u0001(\d+)\u0002/g,(m,n)=>u[n]))};
+function linkify(el,t){
+  const re=new RegExp(URLRE.source,'gi');let i=0,m;
+  while((m=re.exec(t))){
+    const k=m[0].match(/^(.*?)([.,;:!?)\]]*)$/),u=k[1];
+    if(m.index>i)el.append(t.slice(i,m.index));
+    const a=document.createElement('a');a.href=/^www\./i.test(u)?'https://'+u:u;a.textContent=u;a.target='_blank';a.rel='noopener noreferrer';el.appendChild(a);
+    if(k[2])el.append(k[2]);i=m.index+m[0].length;
+  }
+  if(i<t.length)el.append(t.slice(i));
+}
+let wishLoaded=false;
 const deco=n=>n.normalize('NFD').replace(/([nN])\u0303/g,(m,c)=>c==='n'?'\u00f1':'\u00d1').replace(/[\u0300-\u036f]/g,'').normalize('NFC');
 
 const $=id=>document.getElementById(id);
@@ -361,7 +374,7 @@ function showViewer(tok,packed){
     if(open){
       const l=document.createElement('p');l.className='hint';l.textContent='Tienes que regalar a:';
       const w=document.createElement('div');w.className='who';w.textContent=deco(r);
-      out.append(l,w);if(ID.test(sd||'')&&ID.test(tk||'')){const k=document.createElement('div');k.className='note';k.style.textAlign='left';k.textContent='Buscando ideas…';out.appendChild(k);getWish(sd,tk).then(x=>{k.textContent='';const it=wishItems(x);if(x===null){k.textContent='No he podido cargar las ideas de '+r+'. Comprueba la conexión.'}else if(!it.length){k.textContent=r+' todavía no ha dejado ideas.'}else{const t=document.createElement('p');t.style.margin='0 0 6px';t.textContent='Ideas de '+r+':';const ul=document.createElement('ul');ul.className='tree';it.forEach(n=>{const li=document.createElement('li');li.textContent=n;ul.appendChild(li)});k.append(t,ul)}})}btn.textContent='Ocultar';btn.className='big';
+      out.append(l,w);if(ID.test(sd||'')&&ID.test(tk||'')){const k=document.createElement('div');k.className='note';k.style.textAlign='left';k.textContent='Buscando ideas…';out.appendChild(k);getWish(sd,tk).then(x=>{k.textContent='';const it=wishItems(x);if(x===null){k.textContent='No he podido cargar las ideas de '+r+'. Comprueba la conexión.'}else if(!it.length){k.textContent=r+' todavía no ha dejado ideas.'}else{const t=document.createElement('p');t.style.margin='0 0 6px';t.textContent='Ideas de '+r+':';const ul=document.createElement('ul');ul.className='tree';it.forEach(n=>{const li=document.createElement('li');linkify(li,n);ul.appendChild(li)});k.append(t,ul)}})}btn.textContent='Ocultar';btn.className='big';
     }else{btn.textContent='Descubrir mi amigo invisible';btn.className='primary big'}
   };
   const cookie=document.createElement('div');cookie.className='cookie';cookie.innerHTML='<svg viewBox="0 -22 150 196" width="150" height="196" role="img" aria-label="Galletita de jengibre con gabardina negra"><g stroke-linecap="round" fill="none" stroke="#8B4A1E"><path d="M75 34h.01" stroke-width="54"/><path d="M75 66V100" stroke-width="46"/><path d="M56 66L26 106M94 66L124 106" stroke-width="26"/><path d="M65 108L60 158M85 108L90 158" stroke-width="28"/></g><g stroke-linecap="round" fill="none" stroke="#D9955A"><path d="M75 34h.01" stroke-width="46"/><path d="M75 66V100" stroke-width="38"/><path d="M56 66L26 106M94 66L124 106" stroke-width="18"/><path d="M65 108L60 158M85 108L90 158" stroke-width="20"/></g><g class="santa"><path d="M65 108L62 144M85 108L88 144" stroke-linecap="round" fill="none" stroke="#C8352B" stroke-width="22"/><path d="M62 150L60 160M88 150L90 160" stroke-linecap="round" fill="none" stroke="#1B1B1F" stroke-width="24"/><path d="M56 66L40 88M94 66L110 88" stroke-linecap="round" fill="none" stroke="#C8352B" stroke-width="22"/><circle cx="38" cy="91" r="9.5" fill="#fff"/><circle cx="112" cy="91" r="9.5" fill="#fff"/><g class="belly"><ellipse cx="75" cy="98" rx="36" ry="32" fill="#C8352B" stroke="#8F1F17" stroke-width="3"/><rect x="71.5" y="68" width="7" height="60" rx="3" fill="#fff"/><rect x="40" y="92" width="70" height="10" fill="#1B1B1F"/><rect x="68" y="89" width="14" height="16" rx="2" fill="#E0A526"/><rect x="71.5" y="93" width="7" height="8" fill="#1B1B1F"/></g><ellipse cx="75" cy="62" rx="20" ry="7" fill="#fff"/></g><g class="serious"><ellipse cx="66" cy="31" rx="5.4" ry="4.4" fill="#fff"/><ellipse cx="84" cy="31" rx="5.4" ry="4.4" fill="#fff"/><g class="pupils"><circle cx="66" cy="31" r="2.5" fill="#2A170A"/><circle cx="84" cy="31" r="2.5" fill="#2A170A"/></g><path d="M60 25L71 26.5M90 25L79 26.5" stroke-linecap="round" fill="none" stroke="#4A2A12" stroke-width="2.6"/><path d="M68 46H82" stroke-linecap="round" fill="none" stroke="#4A2A12" stroke-width="2.8"/></g><g class="happy"><path d="M54 40Q54 74 75 76Q96 74 96 40Q86 50 75 47Q64 50 54 40Z" fill="#fff" stroke="#E2E2E2" stroke-width="1"/><circle cx="58" cy="40" r="5" fill="#F0828B" opacity=".75"/><circle cx="92" cy="40" r="5" fill="#F0828B" opacity=".75"/><path d="M60 32Q66 24 72 32M78 32Q84 24 90 32" stroke-linecap="round" fill="none" stroke="#4A2A12" stroke-width="3"/><path d="M65 43Q75 57 85 43Z" fill="#7A2A1A"/></g><g class="hat"><path d="M53 14Q55 -12 80 -12Q97 -10 98 14Z" fill="#C8352B"/><path d="M80 -12Q108 -10 112 14" stroke-linecap="round" fill="none" stroke="#C8352B" stroke-width="10"/><circle cx="112" cy="16" r="6.5" fill="#fff"/><rect x="48" y="11" width="54" height="12" rx="6" fill="#fff"/></g><g class="csleeves" stroke-linecap="round" fill="none" stroke="#17171B" stroke-width="22"><path d="M56 66L40 88M94 66L110 88"/></g><g class="coatL"><path d="M75 52L50 54L42 90L35 146L75 148Z" fill="#17171B" stroke="#2C2C33" stroke-width="1.5" stroke-linejoin="round"/><path d="M75 52L56 50L62 78Z" fill="#2C2C33"/><path d="M41 94H75V102H40Z" fill="#2C2C33"/><rect x="67" y="93" width="8" height="10" fill="#E0A526"/><circle cx="66" cy="114" r="2.6" fill="#55555E"/><circle cx="66" cy="130" r="2.6" fill="#55555E"/></g><g class="coatR"><path d="M75 52L100 54L108 90L115 146L75 148Z" fill="#17171B" stroke="#2C2C33" stroke-width="1.5" stroke-linejoin="round"/><path d="M75 52L94 50L88 78Z" fill="#2C2C33"/><path d="M109 94H75V102H110Z" fill="#2C2C33"/><rect x="75" y="93" width="8" height="10" fill="#E0A526"/><circle cx="84" cy="114" r="2.6" fill="#55555E"/><circle cx="84" cy="130" r="2.6" fill="#55555E"/></g></svg>';
@@ -411,14 +424,16 @@ async function getWish(sd,tk){
 function renderWishes(){
   $('fbOff').hidden=!!db;
   const ul=$('wishList');ul.innerHTML='';
-  people.forEach(name=>{const li=document.createElement('li');const sp=document.createElement('span');sp.textContent=name+': '+(wishItems(wishes[name]).join(' · ')||'sin ideas todavía');li.appendChild(sp);ul.appendChild(li)});
+  people.forEach(name=>{const li=document.createElement('li');const sp=document.createElement('span');const it=wishItems(wishes[name]).join(' · ');sp.append(name+': ');if(it)linkify(sp,it);else sp.append(wishLoaded||!db?'sin ideas todavía':'consultando…');li.appendChild(sp);ul.appendChild(li)});
 }
-$('wishRefresh').onclick=async()=>{
-  if(!db){wishMsg('Firebase no está configurado.',true);return}
-  wishMsg('Cargando…');let n=0;
-  for(const p of people){const w=await getWish(sid,tokens[p]);if(w===null){wishMsg('No he podido conectar con el servidor.',true);return}if(w){wishes[p]=w;n++}else delete wishes[p]}
-  renderWishes();wishMsg(n+' de '+people.length+' personas han dejado ideas.');
-};
+async function refreshWishes(quiet){
+  if(!db||!people.length)return;
+  if(!quiet)wishMsg('Cargando…');
+  let n=0;const nw={};
+  for(const p of people){const w=await getWish(sid,tokens[p]);if(w===null){if(!quiet)wishMsg('No he podido conectar con el servidor.',true);return}if(w){nw[p]=w;n++}}
+  wishes=nw;wishLoaded=true;renderWishes();wishMsg(n+' de '+people.length+' personas han dejado ideas.');
+}
+$('wishRefresh').onclick=()=>{if(!db){wishMsg('Firebase no está configurado.',true);return}refreshWishes(false)};
 $('wishDel').onclick=async()=>{
   if(!db)return;
   if(!confirm('¿Borrar del servidor todas las ideas de regalo? Los enlaces seguirán abriéndose, pero las ideas desaparecerán.'))return;
@@ -447,13 +462,13 @@ function wishForm(sd,tk){
   const hi=document.createElement('h2');hi.textContent='Tus ideas de regalo';
   const q=document.createElement('p');q.className='hint';
   q.textContent='Escribe lo que te gustaría recibir o ideas para quien te toque, una en cada línea (pulsa Intro para pasar a la siguiente), y pulsa Guardar. Lo verán quien organiza el sorteo y la persona que te regale. Puedes cambiarlo cuando quieras volviendo a abrir este mismo enlace.';
-  const ta=document.createElement('textarea');ta.rows=4;ta.maxLength=300;ta.setAttribute('aria-label','Lo que me gustaría recibir');
+  const ta=document.createElement('textarea');ta.rows=4;ta.maxLength=600;ta.setAttribute('aria-label','Lo que me gustaría recibir');
   ta.placeholder='Una idea por línea. Por ejemplo:\nLibros de misterio\nUna bufanda azul\nCafé de especialidad';
   const btn=document.createElement('button');btn.className='primary big';btn.style.marginTop='12px';btn.textContent='Guardar mis ideas';
   const st=document.createElement('p');st.className='status';st.setAttribute('role','status');
   getWish(sd,tk).then(x=>{if(x&&!ta.value)ta.value=x});
   btn.onclick=async()=>{
-    const w=ta.value.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean).join('\n').slice(0,300);ta.value=w;btn.disabled=true;st.className='status';st.textContent='Guardando…';
+    const w=wishItems(ta.value).join('\n').slice(0,600);ta.value=w;btn.disabled=true;st.className='status';st.textContent='Guardando…';
     try{await setDoc(doc(db,'sorteos',sd,'deseos',tk),{w});st.textContent='Guardado.';openGift(gift)}
     catch(e){st.className='status err';st.textContent='No se ha podido guardar. Comprueba la conexión e inténtalo de nuevo.'}
     btn.disabled=false;
@@ -462,7 +477,8 @@ function wishForm(sd,tk){
   s.append(hi,q,ta,gift,btn,st);return s;
 }
 window.addEventListener('hashchange',route);
-render();route();
+render();route();refreshWishes(true);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!location.hash)refreshWishes(true)});
 </script>
 </body>
 </html>
